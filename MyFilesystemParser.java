@@ -1,10 +1,12 @@
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -248,6 +250,39 @@ public class MyFilesystemParser {
   
   public long dumpDifferences(String outfile) throws IOException {
     return dumpDifferences(outfile, false);
+  }
+  
+  /** Removes a line from a log, doesn't touch the file on disk */ 
+  public boolean removeLine(String infile, String filename) {
+    try {
+      BufferedWriter tout = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream("$$mfs$$.$$$"))));
+      BufferedReader fin = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(infile))));
+      String tmp;
+      int tab;
+      String myfn;
+      while ((tmp = fin.readLine()) != null) {
+        tab = tmp.indexOf("\t");
+        myfn = tmp.substring(tab+1, tmp.indexOf("\t", tab+1));
+        if (!myfn.equals(filename)) tout.write(tmp+"\r\n");
+      }
+      tout.close();
+      fin.close();
+      File oldlog = new File(infile);
+      File newlog = new File("$$mfs$$.$$$");
+      if (oldlog.delete()) {
+        if (!newlog.renameTo(oldlog)) {
+          System.out.println("ERROR: Could not rename new log to "+logFile.getName()+".");
+          return false;
+        }
+      } else {
+        System.out.println("ERROR: Could not delete old logfile. Redump is still there.");
+        return false;
+      }
+      return true;
+    } catch (IOException ioe) {
+      ioe.printStackTrace();
+      return false;
+    }
   }
   
   /** Deletes dump */

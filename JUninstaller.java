@@ -72,11 +72,13 @@ public class JUninstaller extends Frame implements ActionListener {
   Label lbTime = new Label("--:--:--", Label.CENTER);
   
   Panel pnView = new Panel(new BorderLayout());
+  Panel pnDel = new Panel(new BorderLayout());
   Panel pnViewB = new Panel(new GridLayout(0,1,0,0));
   Label lbView = new Label("---");
   List ltView = new List();
   Button btDetails = new Button("Details");
   Button btRemove = new Button("Remove");
+  Button btDelFile = new Button("Del");
   Button btBack2 = new Button("Back");
   
   Dimension dmScreen = Toolkit.getDefaultToolkit().getScreenSize();  // get Screen dimensions
@@ -133,7 +135,7 @@ public class JUninstaller extends Frame implements ActionListener {
           } else {
             MIP.infoPrint("Can't delete!");
           }
-          updateList(selItem+DATAEXT);
+          updateList(selItem);
         }
       } else {
         MIP.infoPrint("Select one entry!");
@@ -142,10 +144,12 @@ public class JUninstaller extends Frame implements ActionListener {
       clMain.show(pnMain, "1");
     } else if (ae.getSource().equals(btScan)) {  // Scan-Button
       parseFilesys();
+      MQ.msgBox("Scan complete.", "Now install your desired application and RUN IT at least once.\n\nDO NOT INSTALL OR CHANGE ANYTHING ELSE.\n\nIf done, perform one of the two 'Find Changes'.");
     } else if (ae.getSource().equals(btFind)) {  // Find changes-Button
       compareFilesys(false);
     } else if (ae.getSource().equals(btFUp)) {  // Find changes + Update-Button
       compareFilesys(true);
+      MQ.msgBox("Log complete.", "You can now install+run the next application.");
     } else if (ae.getSource().equals(btUnin)) {  // Uninstall-Button
       String selItem = ltApps.getSelectedItem();
       if (selItem != null) {
@@ -159,14 +163,7 @@ public class JUninstaller extends Frame implements ActionListener {
       String selItem = ltApps.getSelectedItem();
       if (selItem != null) {
         lbView.setText("Details of "+selItem);
-        ltView.removeAll();
-        MIP.busy("Reading...");
-        String[] entries = mfs.getEntries(selItem+DATAEXT);
-        MIP.busy("Building list (" + entries.length + ")...");
-        for (int i=0;i<entries.length;i++) {
-          ltView.add(entries[i]);
-        }
-        MIP.infoPrint(entries.length+" entries");
+        updateDetList(selItem+DATAEXT, null);
         clMain.show(pnMain, "4");
       } else {
         MIP.infoPrint("Select one entry!");
@@ -194,7 +191,7 @@ public class JUninstaller extends Frame implements ActionListener {
             }
           }
         } while (!okay && newname!=null);
-        updateList(newname+DATAEXT);
+        updateList(newname);
       } else {
         MIP.infoPrint("Select one entry!"); 
       }
@@ -212,6 +209,33 @@ public class JUninstaller extends Frame implements ActionListener {
           mbt += "\n\nFile doesn't exist anymore.";
         }
         MQ.msgBox("File Details", mbt);
+      } else {
+        MIP.infoPrint("Select one entry!");
+      }
+    } else if (ae.getSource().equals(btRemove)) {  // Remove (log-entry)
+      String selItem = ltView.getSelectedItem();
+      String selFile = ltApps.getSelectedItem();
+      if (selItem != null && selFile != null) {
+        String mbt = selItem.substring(selItem.indexOf(" ")+1); 
+        if (!mfs.removeLine(selFile+DATAEXT, mbt)) MQ.msgBox("Error", "For some reason there were problems removing this line.");
+        updateDetList(selFile+DATAEXT, selItem);
+      } else {
+        MIP.infoPrint("Select one entry!");
+      }
+    } else if (ae.getSource().equals(btDelFile)) {  // Delete file (log-details)
+      String selItem = ltView.getSelectedItem();
+      String selFile = ltApps.getSelectedItem();
+      if (selItem != null && selFile != null) {
+        selItem = selItem.substring(selItem.indexOf(" ")+1);
+        if (MQ.yesnoBox("Are you sure?", "Do you really want to delete this file?\n\n"+selItem+"\n\nDeleting the wrong file may render your phone unusable!") == MQ.YES) {
+          File flDelMe = new File(selItem);
+          if (flDelMe.delete()) {
+            MIP.infoPrint("Deleted.");
+          } else {
+            MIP.infoPrint("Error!"); 
+          }
+          updateDetList(selFile+DATAEXT, selItem);
+        }
       } else {
         MIP.infoPrint("Select one entry!");
       }
@@ -277,12 +301,15 @@ public class JUninstaller extends Frame implements ActionListener {
 
     btDetails.addActionListener(this);
     btRemove.addActionListener(this);
+    btDelFile.addActionListener(this);
     btBack2.addActionListener(this);
     lbView.setFont(ftBold12);
     pnView.add(lbView, BorderLayout.NORTH);
     pnView.add(ltView, BorderLayout.CENTER);
+    pnDel.add(btRemove, BorderLayout.CENTER);
+    pnDel.add(btDelFile, BorderLayout.EAST);
     pnViewB.add(btDetails);
-    pnViewB.add(btRemove);
+    pnViewB.add(pnDel);
     pnViewB.add(btBack2);
     pnView.add(pnViewB, BorderLayout.SOUTH);
 
@@ -324,17 +351,39 @@ public class JUninstaller extends Frame implements ActionListener {
     String[] apps = mfs.getMonitored(DATAEXT);
     ltApps.removeAll();
     int selIdx = 0;
+    if (selItem != null) selItem = selItem.toLowerCase();
     for (int i=0;i<apps.length;i++) {
       ltApps.add(apps[i]);
-      if (selItem!=null && selItem.compareTo(apps[i])>=0) {
-        selIdx = ltApps.getItemCount();
+      if (selItem != null && apps[i].toLowerCase().compareTo(selItem)>=0) {
+        selIdx = ltApps.getItemCount()-1;
         selItem = null;
       }
     }
-    ltApps.select(selIdx);
     ltApps.makeVisible(selIdx);
+    ltApps.select(selIdx);
   }
   
+  private void updateDetList(String log, String selItem) {
+    ltView.removeAll();
+    MIP.busy("Reading...");
+    String[] entries = mfs.getEntries(log);
+    MIP.busy("Building list (" + entries.length + ")...");
+    int selIdx = 0;
+    if (selItem!=null) selItem = selItem.substring(selItem.indexOf(" ")+1).toLowerCase();
+    String cmpItem;
+    for (int i=0;i<entries.length;i++) {
+      ltView.add(entries[i]);
+      cmpItem = entries[i].substring(entries[i].indexOf(" ")+1).toLowerCase();
+      if (selItem != null && cmpItem.compareTo(selItem)>=0) {
+        selIdx = ltView.getItemCount()-1;
+        selItem = null;
+      }
+    }
+    ltView.makeVisible(selIdx);
+    ltView.select(selIdx);
+    MIP.infoPrint(entries.length+" entries");
+  }
+
   private void compareFilesys(boolean redump) {
     // parse filsystem and compare with
     // previously generated info
@@ -381,7 +430,7 @@ public class JUninstaller extends Frame implements ActionListener {
           MIP.infoPrint("Could not delete!");
         }
       }
-      updateList(newname+DATAEXT);
+      updateList(newname);
       clMain.show(pnMain, "1");
     } else {
       MIP.infoPrint("No diffs found.");
