@@ -6,6 +6,9 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 
 public class MyProgBar extends Component {
+  final static int WINDOWS = 1;
+  final static int PQ1 = 2;
+  final static int PQ2 = 3;
   int minVal;
   int maxVal;
   int curVal;
@@ -14,22 +17,25 @@ public class MyProgBar extends Component {
   Color txColor = Color.white;
   int Height = 18;
   int Width = 40;
+  private int mode;
   
-  public MyProgBar(int min, int max, int pos) {
-    // super();
+  public MyProgBar(int min, int max, int pos, int mode) {
     this.minVal = min;
     this.maxVal = max;
     this.curVal = pos;
+    this.mode = mode;
   }
     
+  public MyProgBar(int min, int max, int pos) {
+    this(min, max, pos, MyProgBar.WINDOWS);
+  }
+  
   public MyProgBar(int min, int max) {
-    // super();
-    this(min, max, 0);
+    this(min, max, min, MyProgBar.WINDOWS);
   }
   
   public MyProgBar() {
-    // super();
-    this(0, 100, 0);
+    this(0, 100, 0, MyProgBar.WINDOWS);
   }
     
   public void paint(Graphics g) {
@@ -41,9 +47,28 @@ public class MyProgBar extends Component {
     g.setColor(bgColor);
     g.fill3DRect(0,0,getSize().width-1,getSize().height-1, false);
     g.setColor(fgColor);
-    g.fill3DRect(0,0,(int)((double)(getSize().width-1)/(maxVal-minVal)*(curVal-minVal)),getSize().height-1, true);
+    int pright = (int)((double)(getSize().width-2)/(maxVal-minVal)*(curVal-minVal));
+    g.fill3DRect(1,1,pright,getSize().height-2, true);
     g.setXORMode(txColor);
-    g.drawString(percString, getSize().width/2-fm.stringWidth(percString)/2, getSize().height/2-fm.getHeight()/2+fm.getAscent());
+    int tleft;
+    switch (mode) {
+      default:
+      case MyProgBar.WINDOWS:
+        g.drawString(percString, getSize().width/2-fm.stringWidth(percString)/2, getSize().height/2-fm.getHeight()/2+fm.getAscent());
+        break;
+
+      case MyProgBar.PQ1:
+        tleft = pright+2;
+        if (tleft+fm.stringWidth(percString)>=getSize().width-1) tleft = getSize().width-1-fm.stringWidth(percString);
+        g.drawString(percString, tleft, getSize().height/2-fm.getHeight()/2+fm.getAscent());
+        break;
+
+      case MyProgBar.PQ2:
+        tleft = (pright-1)/2-fm.stringWidth(percString)/2+1;
+        if (tleft <= 2) tleft = 2;
+        g.drawString(percString, tleft, getSize().height/2-fm.getHeight()/2+fm.getAscent());
+        break;
+    }
     g.setPaintMode();
     g.setColor(Color.black);
     g.drawRect(0,0,getSize().width-1,getSize().height-1);
