@@ -18,6 +18,10 @@ import java.awt.Point;
 import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 public class JUninstaller extends Frame implements ActionListener {
 
@@ -31,6 +35,8 @@ public class JUninstaller extends Frame implements ActionListener {
   final Font ftPlain8 = new Font("Dialog", Font.PLAIN, 8);
   final Font ftPlain10 = new Font("Dialog", Font.PLAIN, 10);
   final Font ftBold12 = new Font("Dialog", Font.BOLD, 12);
+  
+  Properties props = new Properties();
   
   CardLayout clMain = new CardLayout();
   Panel pnMain = new Panel(clMain);
@@ -70,6 +76,7 @@ public class JUninstaller extends Frame implements ActionListener {
   Label lbSIP = new Label("SCAN IN PROGRESS", Label.CENTER);
   Label lbPW = new Label("Please wait...", Label.CENTER);
   Label lbTime = new Label("--:--:--", Label.CENTER);
+  MyProgBar progBar = new MyProgBar();
   
   Panel pnView = new Panel(new BorderLayout());
   Panel pnDel = new Panel(new BorderLayout());
@@ -92,6 +99,14 @@ public class JUninstaller extends Frame implements ActionListener {
   private class MainWindowAdapter extends WindowAdapter {
     public void windowClosing(WindowEvent we) {
       // TODO: Insert commands to execute upon shutdown
+      try {
+        FileOutputStream fos = new FileOutputStream(new File("JUninstaller.prop"));
+        props.save(fos, "jUninstaller configuration --- DO NOT EDIT");
+        fos.close();
+      } catch (IOException ioe) {
+        ioe.printStackTrace();
+        MIP.infoPrint("Error saving config");
+      }
       MIP.infoPrint("Goodbye...");
       MIP.hide();
       System.exit(0);
@@ -286,6 +301,17 @@ public class JUninstaller extends Frame implements ActionListener {
     setSize(WND_W, WND_H);   // set Frame size
     setLocation((dmScreen.width-WND_W)/2, (dmScreen.height-WND_H)/2); // center Frame
     MIP.busy(APPNAME+" loading...");
+    File propFile = new File("JUninstaller.prop");
+    if (propFile.exists()) {
+      try {
+        FileInputStream fis = new FileInputStream(propFile);
+        props.load(fis);
+        fis.close();
+      } catch (IOException ioe) {
+        ioe.printStackTrace();
+        MIP.infoPrint("Error loading config");
+      }
+    }
     doAbout();
     
     btAbout.addActionListener(this);
@@ -334,6 +360,7 @@ public class JUninstaller extends Frame implements ActionListener {
     pnScan.add(lbSIP);
     pnScan.add(lbPW);
     pnScan.add(lbTime);
+    progBar.setMode(MyProgBar.PQ2);
 
     btDetails.addActionListener(this);
     btRemove.addActionListener(this);
@@ -374,8 +401,9 @@ public class JUninstaller extends Frame implements ActionListener {
     MIP.busy("Scan in progress");
     TimerThread thTimer = new TimerThread();
     thTimer.start();
+    long count = 0;
     try {
-      mfs.dumpAllDrives();
+      count = mfs.dumpAllDrives();
       MIP.infoPrint("Scan complete.");
     } catch (Exception ex) {
       MIP.infoPrint("Exception!");
@@ -383,6 +411,7 @@ public class JUninstaller extends Frame implements ActionListener {
       if (!mfs.delDump()) { MIP.infoPrint("Delete log failed"); }
     }
     thTimer.setStop(true);
+    props.put("dump.entries", Long.toString(count));
     clMain.show(pnMain, "2");
     lbLast.setText("Last scan: "+mfs.getDumpDate());
   }
@@ -444,6 +473,8 @@ public class JUninstaller extends Frame implements ActionListener {
     File flNew;
     
     lbSIP.setText("=== COMPARING FILES ===");
+    pnScan.add(progBar);
+    pnScan.validate();
     clMain.show(pnMain, "3");
     MIP.busy("Comparison in progress");
     TimerThread thTimer = new TimerThread();
@@ -456,6 +487,8 @@ public class JUninstaller extends Frame implements ActionListener {
       ex.printStackTrace();
     }
     thTimer.setStop(true);
+    pnScan.remove(progBar);
+    pnScan.validate();
     if (diffs > 0) {
       MIP.infoPrint(diffs+" changes found.");
       do {
@@ -501,12 +534,46 @@ public class JUninstaller extends Frame implements ActionListener {
       long min;
       long sec;
       long mil;
+      long remTime;
+      long maxcount = 0;
+      boolean blProgBar = (lbSIP.getText().indexOf("SCAN") == -1);
+      double perc;
+      int idx;
+      String outtext;
+      int ctr = 0;
+      if (blProgBar) {
+        try {
+          maxcount = Long.parseLong(props.getProperty("dump.entries"));
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+        progBar.setMaxValue(maxcount);
+      }
       do {
         diffTime = System.currentTimeMillis()-startTime;
         min = diffTime/60000;
         sec = (diffTime/1000)%60;
         mil = (diffTime/10)%100;
-        lbTime.setText(min+":"+((sec<10)?"0":"")+sec+"."+((mil<10)?"0":"")+mil);
+        outtext = min+":"+((sec<10)?"0":"")+sec+"."+((mil<10)?"0":"")+mil;
+        if (blProgBar && maxcount>0) {
+          progBar.setPos(mfs.cmpcounter);
+          perc = (double)mfs.cmpcounter/(double)maxcount;
+          if (perc>0.1 && ctr>10) {
+            remTime = (int)((double)diffTime/perc)-diffTime;
+            min = remTime/60000;
+            sec = (remTime/1000)%60;
+            mil = (remTime/10)%100;
+            outtext += " ("+min+":"+((sec<10)?"0":"")+sec+"."+((mil<10)?"0":"")+mil+")";
+            ctr = 0;
+          } else {
+            idx = lbTime.getText().indexOf(" ");
+            if (idx>=0) {
+              outtext += lbTime.getText().substring(lbTime.getText().indexOf(" "));
+            }
+          }
+          ctr++;
+        }
+        lbTime.setText(outtext);
         try {
           Thread.sleep(500);
         } catch (Exception ex) {

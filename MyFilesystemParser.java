@@ -19,6 +19,8 @@ public class MyFilesystemParser {
   private String curLine;
   private String ignoreDir;
   private long counter;
+  public long cmpcounter;
+  public long dumpcounter;
   
   public MyFilesystemParser(String logfile) {
     logFile = new File(logfile+".gz");
@@ -45,8 +47,8 @@ public class MyFilesystemParser {
     File[] result = new File[1];
     result[0] = new File("E:\\");
     return result;
-  } */
-  
+  }
+*/
   public File[] listRoots() {
     int count = 0;
     for (char d='A';d<='Z';d++) {
@@ -155,21 +157,24 @@ public class MyFilesystemParser {
         dumpFiles(fw, entries[i]);
       } else if (entries[i].isFile()) {
         fw.write((entries[i].getPath()+"\t"+entries[i].length()+"\t"+entries[i].lastModified()+"\r\n").getBytes());
+        dumpcounter++;
       }
     }
     fw.flush();
   }
   
   /** Walks the root-directories of all drives and calls dumpFiles() */
-  public void dumpAllDrives() throws IOException {
+  public long dumpAllDrives() throws IOException {
       BufferedOutputStream fw = new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(logFile)));
       File[] roots = listRoots();
+      dumpcounter = 0;
       for (int i=0;i<roots.length;i++) {
         if (roots[i].canWrite()) {
           dumpFiles(fw, roots[i]);
         }
       }
       fw.close();
+      return dumpcounter;
   }
   
   /** Compares file-liste from cmp to actual files on disk and writes changes to out */
@@ -194,6 +199,7 @@ public class MyFilesystemParser {
           out.write(("-\t"+curLine+"\r\n").getBytes());
           counter++;
           curLine = cmp.readLine();
+          cmpcounter++;
           fn1 = curLine.substring(0, curLine.indexOf("\t"));
         }
         if (!myLine.equals(curLine)) {
@@ -203,6 +209,7 @@ public class MyFilesystemParser {
             out.write(("*\t"+myLine+"\r\n").getBytes());
             counter++;
             curLine = cmp.readLine();
+            cmpcounter++;
           } else {
             // there's a new file on disk
             out.write(("+\t"+myLine+"\r\n").getBytes());
@@ -211,6 +218,7 @@ public class MyFilesystemParser {
         } else {
           // both entries are equal - never mind, advance to next
           curLine = cmp.readLine();
+          cmpcounter++;
         }
       } // else if (entries[i].isFile())
     } // for (int i=0; i<entries.length; i++)
@@ -224,6 +232,7 @@ public class MyFilesystemParser {
     if (redump) dout = new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream("$$mfs$$.$$$"))); else dout = null;
     BufferedReader cmp = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(logFile))));
     counter = 0;
+    cmpcounter = 1;
     File[] roots = listRoots();
     curLine = cmp.readLine();
     for (int i=0;i<roots.length;i++) {
