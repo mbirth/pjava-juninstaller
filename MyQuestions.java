@@ -83,9 +83,21 @@ public class MyQuestions implements ActionListener {
     // make each line below maxWidth as long as there is a whitespace in it
     int idx;
     FontMetrics fm = di.getFontMetrics(ftDialog);
+    boolean addedLine;
     for (int i=0;i<txts.length;i++) {
       txts[i] = txts[i].trim();
+      addedLine = false;
       while (fm.stringWidth(txts[i]) > maxWidth && txts[i].indexOf(" ") != -1) {
+        if (!addedLine) {
+          tmps = new String[txts.length+1];
+          for (int j=0;j<txts.length;j++) {
+            if (j<=i) tmps[j] = txts[j];
+              else tmps[j+1] = txts[j];
+          }
+          tmps[i+1] = "";
+          txts = tmps;
+          addedLine = true;
+        }
         // auto-lengthen txts, if there is more space needed
         if (i+1>=txts.length) {
           tmps = new String[txts.length+1];
@@ -97,7 +109,7 @@ public class MyQuestions implements ActionListener {
         }
         // wrap word to next line
         idx = txts[i].lastIndexOf(" ");
-        txts[i+1] = txts[i].substring(idx) + txts[i+1];
+        txts[i+1] = txts[i].substring(idx+1) + " " + txts[i+1];
         txts[i] = txts[i].substring(0, idx);
       }
     }

@@ -225,16 +225,33 @@ public class JUninstaller extends Frame implements ActionListener {
     } else if (ae.getSource().equals(btDelFile)) {  // Delete file (log-details)
       String selItem = ltView.getSelectedItem();
       String selFile = ltApps.getSelectedItem();
+      char status = selItem.charAt(0);  // for addition question later
       if (selItem != null && selFile != null) {
         selItem = selItem.substring(selItem.indexOf(" ")+1);
-        if (MQ.yesnoBox("Are you sure?", "Do you really want to delete this file?\n\n"+selItem+"\n\nDeleting the wrong file may render your phone unusable!") == MQ.YES) {
-          File flDelMe = new File(selItem);
-          if (flDelMe.delete()) {
-            MIP.infoPrint("Deleted.");
-          } else {
-            MIP.infoPrint("Error!"); 
+        File flDelMe = new File(selItem);
+        if (flDelMe.exists()) {
+          if (MQ.yesnoBox("Are you sure?", "Do you really want to delete this file?\n\n"+selItem+"\n\nDeleting the wrong file may render your phone unusable!") == MQ.YES) {
+            
+            boolean doIt = false;
+            if (status == '*') {
+              doIt = (MQ.yesnoBox("Are you really sure?", "This file has already been there before the logged installation occurred.\nDeleting it may harm your phone.\n\nDo you still want to delete it?") == MQ.YES); 
+            } else {
+              doIt = true;
+            }
+            
+            if (doIt) {
+              if (flDelMe.delete()) {
+                MIP.infoPrint("Deleted.");
+              } else {
+                MIP.infoPrint("Error!"); 
+              }
+              updateDetList(selFile+DATAEXT, selItem);
+            } else {
+              MIP.infoPrint("Deletion aborted.");
+            }
           }
-          updateDetList(selFile+DATAEXT, selItem);
+        } else {
+          MIP.infoPrint("File does not exist!"); 
         }
       } else {
         MIP.infoPrint("Select one entry!");
