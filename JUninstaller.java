@@ -73,10 +73,13 @@ public class JUninstaller extends Frame implements ActionListener {
   
   Panel pnView = new Panel(new BorderLayout());
   Panel pnDel = new Panel(new BorderLayout());
-  Panel pnViewB = new Panel(new GridLayout(0,1,0,0));
+  Panel pnViewB = new Panel(new BorderLayout());
+  Panel pnViewC = new Panel(new GridLayout(0,1,0,0));
+  Panel pnViewD = new Panel(new GridLayout(0,1,0,0));
   Label lbView = new Label("---");
   List ltView = new List();
   Button btDetails = new Button("Details");
+  Button btRefresh = new Button("Refresh");
   Button btRemove = new Button("Remove");
   Button btDelFile = new Button("Del");
   Button btBack2 = new Button("Back");
@@ -212,13 +215,17 @@ public class JUninstaller extends Frame implements ActionListener {
       } else {
         MIP.infoPrint("Select one entry!");
       }
-    } else if (ae.getSource().equals(btRemove)) {  // Remove (log-entry)
+    } else if (ae.getSource().equals(btRemove)) {  // Remove (single log-entry)
       String selItem = ltView.getSelectedItem();
       String selFile = ltApps.getSelectedItem();
       if (selItem != null && selFile != null) {
         String mbt = selItem.substring(selItem.indexOf(" ")+1); 
-        if (!mfs.removeLine(selFile+DATAEXT, mbt)) MQ.msgBox("Error", "For some reason there were problems removing this line.");
-        updateDetList(selFile+DATAEXT, selItem);
+        if (mfs.removeLine(selFile+DATAEXT, mbt)) {
+          ltView.remove(selItem);
+        } else {
+          MQ.msgBox("Error", "For some reason there were problems removing this line.");
+        }
+//        updateDetList(selFile+DATAEXT, selItem);
       } else {
         MIP.infoPrint("Select one entry!");
       }
@@ -242,10 +249,11 @@ public class JUninstaller extends Frame implements ActionListener {
             if (doIt) {
               if (flDelMe.delete()) {
                 MIP.infoPrint("Deleted.");
+                ltView.replaceItem(status+"! "+selItem, ltView.getSelectedIndex());
               } else {
-                MIP.infoPrint("Error!"); 
+                MIP.infoPrint("Error!");
               }
-              updateDetList(selFile+DATAEXT, selItem);
+//              updateDetList(selFile+DATAEXT, selItem);
             } else {
               MIP.infoPrint("Deletion aborted.");
             }
@@ -255,6 +263,13 @@ public class JUninstaller extends Frame implements ActionListener {
         }
       } else {
         MIP.infoPrint("Select one entry!");
+      }
+    } else if (ae.getSource().equals(btRefresh)) {  // Refresh list (log-details)
+      String selFile = ltApps.getSelectedItem();
+      if (selFile != null) {
+        updateDetList(selFile+DATAEXT, null);
+      } else {
+        MIP.infoPrint("Error while refreshing!");
       }
     }
     // TODO: more events
@@ -320,14 +335,18 @@ public class JUninstaller extends Frame implements ActionListener {
     btRemove.addActionListener(this);
     btDelFile.addActionListener(this);
     btBack2.addActionListener(this);
+    btRefresh.addActionListener(this);
     lbView.setFont(ftBold12);
     pnView.add(lbView, BorderLayout.NORTH);
     pnView.add(ltView, BorderLayout.CENTER);
-    pnDel.add(btRemove, BorderLayout.CENTER);
-    pnDel.add(btDelFile, BorderLayout.EAST);
-    pnViewB.add(btDetails);
-    pnViewB.add(pnDel);
-    pnViewB.add(btBack2);
+    pnViewC.add(btDetails);
+    pnViewC.add(btRemove);
+    pnViewD.add(btRefresh);
+    pnViewD.add(btDelFile);
+    pnDel.add(pnViewC, BorderLayout.CENTER);
+    pnDel.add(pnViewD, BorderLayout.EAST);
+    pnViewB.add(pnDel, BorderLayout.CENTER);
+    pnViewB.add(btBack2, BorderLayout.SOUTH);
     pnView.add(pnViewB, BorderLayout.SOUTH);
 
     pnMain.add(pnUnin, "1"); // Main view
