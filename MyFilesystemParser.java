@@ -15,10 +15,13 @@ public class MyFilesystemParser {
   
   File logFile;
   private String curLine;
+  private String ignoreDir;
   private long counter;
   
   public MyFilesystemParser(String logfile) {
     logFile = new File(logfile+".gz");
+    ignoreDir = System.getProperty("user.dir");
+    while (ignoreDir.charAt(ignoreDir.length()-1)=='\\') ignoreDir = ignoreDir.substring(0, ignoreDir.length()-1);
   }
   
   public boolean driveIsWritable(char drive) {
@@ -55,14 +58,21 @@ public class MyFilesystemParser {
     return result;
   }
   
-  /** Returns all files of a specified directory */
-  public File[] listFiles(File dir) {
+  /** Returns all files of a specified directory
+      ATTENTION! ignoreDir has to contain a directory which should be ignored (temp, etc.).
+      The String must have no trailing backslash or slash. Also keep in mind that we work with
+      equalsIgnoreCase - so this won't work correctly on UNIXish machines
+      @param dir Directory to get contents of
+      @param noIgnoreDir If false, the startup-directory is ignored (because there are temporary files, data files, etc.)
+      @return File[] with File-Objects of all files in that directory
+      */
+  public File[] listFiles(File dir, boolean noIgnoreDir) {
     String[] files = dir.list();
     File[] result;
-    if (files != null) {
+    if ( files != null && ( !dir.getAbsolutePath().equalsIgnoreCase(ignoreDir) || noIgnoreDir )) {
       result = new File[files.length];
       for (int i=0; i<files.length; i++) {
-        String lastItem = dir.getPath();
+        String lastItem = dir.getAbsolutePath();
         result[i] = new File(lastItem+((lastItem.charAt(lastItem.length()-1)=='\\')?"":"\\")+files[i]);
       }
     } else {
@@ -136,7 +146,7 @@ public class MyFilesystemParser {
   
   /** Writes all file-entries incl. size and time of dir and sub-dirs to fw */
   public void dumpFiles(BufferedOutputStream fw, File dir) throws IOException {
-    File[] entries = sortDir(listFiles(dir));
+    File[] entries = sortDir(listFiles(dir, false));
     for (int i=0; i<entries.length; i++) {
       if (entries[i].isDirectory() && entries[i].canRead()) {
         fw.flush();
@@ -162,7 +172,7 @@ public class MyFilesystemParser {
   
   /** Compares file-liste from cmp to actual files on disk and writes changes to out */
   public void cmpFiles(BufferedReader cmp, BufferedOutputStream out, File dir, BufferedOutputStream dout) throws IOException {
-    File[] entries = sortDir(listFiles(dir));
+    File[] entries = sortDir(listFiles(dir, false));
     String myLine = "";
     for (int i=0; i<entries.length; i++) {
       if (entries[i].isDirectory() && entries[i].canRead()) {
@@ -285,7 +295,7 @@ public class MyFilesystemParser {
   
   /** Returns a list of data files */
   public String[] getMonitored(String mask) {
-    File[] files = sortDir(listFiles(new File(".\\")));
+    File[] files = sortDir(listFiles(new File("."), true));
     String fn = "";
     String[] result = new String[0];
     String[] tmp;
