@@ -217,11 +217,13 @@ public class JUninstaller extends Frame implements ActionListener {
       }
     } else if (ae.getSource().equals(btRemove)) {  // Remove (single log-entry)
       String selItem = ltView.getSelectedItem();
-      String selFile = ltApps.getSelectedItem();
+      String selFile = lbView.getText().substring(11);
       if (selItem != null && selFile != null) {
         String mbt = selItem.substring(selItem.indexOf(" ")+1); 
         if (mfs.removeLine(selFile+DATAEXT, mbt)) {
+          int idx = ltView.getSelectedIndex();
           ltView.remove(selItem);
+          ltView.select(idx);
         } else {
           MQ.msgBox("Error", "For some reason there were problems removing this line.");
         }
@@ -231,7 +233,7 @@ public class JUninstaller extends Frame implements ActionListener {
       }
     } else if (ae.getSource().equals(btDelFile)) {  // Delete file (log-details)
       String selItem = ltView.getSelectedItem();
-      String selFile = ltApps.getSelectedItem();
+      String selFile = lbView.getText().substring(11);
       char status = selItem.charAt(0);  // for addition question later
       if (selItem != null && selFile != null) {
         selItem = selItem.substring(selItem.indexOf(" ")+1);
@@ -266,8 +268,10 @@ public class JUninstaller extends Frame implements ActionListener {
       }
     } else if (ae.getSource().equals(btRefresh)) {  // Refresh list (log-details)
       String selFile = ltApps.getSelectedItem();
+      String selItem = ltView.getSelectedItem();
+      if (selItem != null) selItem = selItem.substring(selItem.indexOf(" ")+1);
       if (selFile != null) {
-        updateDetList(selFile+DATAEXT, null);
+        updateDetList(selFile+DATAEXT, selItem);
       } else {
         MIP.infoPrint("Error while refreshing!");
       }
@@ -384,6 +388,8 @@ public class JUninstaller extends Frame implements ActionListener {
   }
   
   private void updateList(String selItem) {
+    pnUnin.remove(ltApps);
+    pnUnin.validate();
     String[] apps = mfs.getMonitored(DATAEXT);
     ltApps.removeAll();
     int selIdx = 0;
@@ -397,9 +403,14 @@ public class JUninstaller extends Frame implements ActionListener {
     }
     ltApps.makeVisible(selIdx);
     ltApps.select(selIdx);
+    pnUnin.add(ltApps, BorderLayout.CENTER);
+    pnUnin.validate();
+    MIP.infoPrint(apps.length+" logs");
   }
   
   private void updateDetList(String log, String selItem) {
+    pnView.remove(ltView);
+    pnView.validate();
     ltView.removeAll();
     MIP.busy("Reading...");
     String[] entries = mfs.getEntries(log);
@@ -417,6 +428,8 @@ public class JUninstaller extends Frame implements ActionListener {
     }
     ltView.makeVisible(selIdx);
     ltView.select(selIdx);
+    pnView.add(ltView, 1);
+    pnView.validate();
     MIP.infoPrint(entries.length+" entries");
   }
 
@@ -444,6 +457,7 @@ public class JUninstaller extends Frame implements ActionListener {
     }
     thTimer.setStop(true);
     if (diffs > 0) {
+      MIP.infoPrint(diffs+" changes found.");
       do {
         okay = false;
         newname = MQ.inputBox("Enter name", "Enter a name for this entry:", newname);
