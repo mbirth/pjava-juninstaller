@@ -203,7 +203,7 @@ public class JUninstaller extends Frame implements ActionListener {
     } else if (ae.getSource().equals(btDetails)) {  // Details of log-entry
       String selItem = ltView.getSelectedItem();
       if (selItem != null) {
-        String mbt = selItem.substring(2); 
+        String mbt = selItem.substring(selItem.indexOf(" ")+1); 
         File flDet = new File(mbt);
         if (flDet.exists()) {
           mbt += "\n\nSize: "+flDet.length()+" Bytes";

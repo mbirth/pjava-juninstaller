@@ -329,7 +329,13 @@ public class MyFilesystemParser {
           tmp[i] = result[i];
         }
         tab = ln.indexOf("\t");
-        tmp[tmp.length-1] = ln.substring(0, tab)+" "+ln.substring(tab+1, ln.indexOf("\t", tab+1));
+        String fn = ln.substring(tab+1, ln.indexOf("\t", tab+1));
+        File fl = new File(fn);
+        String status = ln.substring(0, tab);
+        if (!fl.exists()) {
+          status += "!";
+        }
+        tmp[tmp.length-1] = status+" "+fn;
         result = tmp;
         ln = in.readLine();
       }
