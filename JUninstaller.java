@@ -24,6 +24,7 @@ public class JUninstaller extends Frame implements ActionListener {
   final int WND_W=208, WND_H=276;  // initial window size
   final String APPNAME="jUninstaller";
   final String APPVERSION="1.0";
+  final String DATAEXT=".jun.gz";
   
   private static JUninstaller jUninstaller = null;
   
@@ -126,13 +127,13 @@ public class JUninstaller extends Frame implements ActionListener {
       String selItem = ltApps.getSelectedItem();
       if (selItem != null) {
         if (MQ.yesnoBox("Are you sure?", "Do you really want to delete this entry without uninstall?") == MQ.YES) {
-          File flDelMe = new File(selItem+".jun.gz");
+          File flDelMe = new File(selItem+DATAEXT);
           if (flDelMe.delete()) {
             MIP.infoPrint("Deleted!");
           } else {
             MIP.infoPrint("Can't delete!");
           }
-          updateList();
+          updateList(selItem+DATAEXT);
         }
       } else {
         MIP.infoPrint("Select one entry!");
@@ -160,7 +161,7 @@ public class JUninstaller extends Frame implements ActionListener {
         lbView.setText("Details of "+selItem);
         ltView.removeAll();
         MIP.busy("Reading...");
-        String[] entries = mfs.getEntries(selItem+".jun.gz");
+        String[] entries = mfs.getEntries(selItem+DATAEXT);
         MIP.busy("Building list (" + entries.length + ")...");
         for (int i=0;i<entries.length;i++) {
           ltView.add(entries[i]);
@@ -175,13 +176,13 @@ public class JUninstaller extends Frame implements ActionListener {
       if (selItem != null) {
         boolean okay;
         File flNew;
-        File flTemp = new File(selItem+".jun.gz");
+        File flTemp = new File(selItem+DATAEXT);
         String newname = "";
         do {
           okay = false;
           newname = MQ.inputBox("Enter name", "Enter new name for this entry:", ((newname!="")?newname:selItem));
           if (newname != null) {
-            flNew = new File(newname+".jun.gz");
+            flNew = new File(newname+DATAEXT);
             if (newname.equals("")) {
               MIP.infoPrint("Enter a name");
             } else if (flNew.exists()) {
@@ -193,7 +194,7 @@ public class JUninstaller extends Frame implements ActionListener {
             }
           }
         } while (!okay && newname!=null);
-        updateList();
+        updateList(newname+DATAEXT);
       } else {
         MIP.infoPrint("Select one entry!"); 
       }
@@ -235,7 +236,7 @@ public class JUninstaller extends Frame implements ActionListener {
     btRena.addActionListener(this);
     btView.addActionListener(this);
     
-    updateList();
+    updateList(null);
     
     pnMain.setFont(ftPlain8);
     btAbout.setFont(ftBold12);
@@ -319,12 +320,19 @@ public class JUninstaller extends Frame implements ActionListener {
     lbLast.setText("Last scan: "+mfs.getDumpDate());
   }
   
-  private void updateList() {
-    String[] apps = mfs.getMonitored(".jun.gz");
+  private void updateList(String selItem) {
+    String[] apps = mfs.getMonitored(DATAEXT);
     ltApps.removeAll();
+    int selIdx = 0;
     for (int i=0;i<apps.length;i++) {
       ltApps.add(apps[i]);
+      if (selItem!=null && selItem.compareTo(apps[i])>=0) {
+        selIdx = ltApps.getItemCount();
+        selItem = null;
+      }
     }
+    ltApps.select(selIdx);
+    ltApps.makeVisible(selIdx);
   }
   
   private void compareFilesys(boolean redump) {
@@ -355,7 +363,7 @@ public class JUninstaller extends Frame implements ActionListener {
         okay = false;
         newname = MQ.inputBox("Enter name", "Enter a name for this entry:", newname);
         if (newname != null) {
-          flNew = new File(newname+".jun.gz");
+          flNew = new File(newname+DATAEXT);
           if (newname.equals("")) {
             MIP.infoPrint("Enter a name");
           } else if (flNew.exists()) {
@@ -373,7 +381,7 @@ public class JUninstaller extends Frame implements ActionListener {
           MIP.infoPrint("Could not delete!");
         }
       }
-      updateList();
+      updateList(newname+DATAEXT);
       clMain.show(pnMain, "1");
     } else {
       MIP.infoPrint("No diffs found.");
