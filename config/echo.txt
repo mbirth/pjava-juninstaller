@@ -1,0 +1,20 @@
+Usage: .\echo [OPTION]... [STRING]...
+
+  -n              do not output the trailing newline
+  -e              (unused)
+  -E              disable interpolation of some sequences in STRINGs
+      --help      display this help and exit (should be alone)
+      --version   output version information and exit (should be alone)
+
+Without -E, the following sequences are recognized and interpolated:
+
+  \NNN   the character whose ASCII code is NNN (octal)
+  \\     backslash
+  \a     alert (BEL)
+  \b     backspace
+  \c     suppress trailing newline
+  \f     form feed
+  \n     new line
+  \r     carriage return
+  \t     horizontal tab
+  \v     vertical tab

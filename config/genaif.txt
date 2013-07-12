@@ -1,0 +1,11 @@
+Usage: genaif UID3 < aifspecfile > app.aif
+   Or: genaif UID1 UID2 UID3 > pkgfile.pkg
+
+# Sample aifspecfile:
+# Mbmfile contains a number of icon/mask pairs
+mbmfile=app.mbm
+ELangEnglish=The test app
+ELangGerman=Die Test App
+hidden=0
+embeddability=0
+newfile=1

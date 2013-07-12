@@ -1,0 +1,31 @@
+BMCONV version 48.
+Epoc multiple bitmap file/rom store convertor program.
+Copyright (c) 1998 Symbian Ltd
+
+Usage: BMCONV [/r] [/n] [/hheader] [/q] epocfile [OPT]bmp_1 ... [OPT]bmp_n
+       BMCONV /u epocfile bmp_1 [... bmp_n]
+       BMCONV /v epocfile
+       BMCONV commandfile
+
+ /r specifies a ROM image destination file,
+ the default is a File Store destination file.
+
+ /n disables bitmap compression.
+
+ /q specifies quiet mode - only errors are reported.
+
+ /hheader optionally specifies the automatic generation
+ of a header file "header" for inclusion into code.
+
+ OPT may be one of /1, /2, /4, /8, /c4, /c8, /c12, /c16, /c24
+ specifying bits per pixel and grey-scale/colour, default is /2.
+
+ epocfile specifies the epoc multi-bitmap file name.
+ bmp_n specifies the nth bitmap file name.
+
+ /u decompiles epocfile to bmp_1,...,bmp_n
+ /v displays a summary of the bitmaps in epocfile
+ otherwise bmp_1,...,bmp_n are compiled to epocfile
+
+ commandfile specifies a file containing the commandline
+ with commands separated by spaces or newlines.

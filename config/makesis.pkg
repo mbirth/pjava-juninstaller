@@ -1,0 +1,10 @@
+&EN
+#{"jUninstaller"},(0x10205DB2),1,0,100,TYPE=SISAPP
+(0x101F617B),2,0,0,{"UIQ20ProductID"}
+"files\jUninstaller.aif"-"!:\System\Apps\jUninstaller\jUninstaller.aif"
+"files\jUninstaller.app"-"!:\System\Apps\jUninstaller\jUninstaller.app"
+"files\jUninstaller.jar"-"!:\System\Apps\jUninstaller\jUninstaller.jar"
+"files\jUninstaller.txt"-"!:\System\Apps\jUninstaller\jUninstaller.txt"
+""-"!:\system\Apps\JUninstaller\JUninstaller.prop",FN
+"add\!\system\Java\ext\Util.jar"-"!:\system\Java\ext\Util.jar"
+"add\!\system\Libs\TaskSwitch1.dll"-"!:\system\Libs\TaskSwitch1.dll"

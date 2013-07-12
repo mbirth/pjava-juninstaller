@@ -430,10 +430,10 @@ public class JUninstaller extends Frame implements ActionListener {
         selItem = null;
       }
     }
-    ltApps.makeVisible(selIdx);
     ltApps.select(selIdx);
     pnUnin.add(ltApps, BorderLayout.CENTER);
     pnUnin.validate();
+    ltApps.makeVisible(selIdx);
     MIP.infoPrint(apps.length+" logs");
   }
   
@@ -455,10 +455,10 @@ public class JUninstaller extends Frame implements ActionListener {
         selItem = null;
       }
     }
-    ltView.makeVisible(selIdx);
     ltView.select(selIdx);
     pnView.add(ltView, 1);
     pnView.validate();
+    ltView.makeVisible(selIdx);
     MIP.infoPrint(entries.length+" entries");
   }
 
@@ -534,13 +534,8 @@ public class JUninstaller extends Frame implements ActionListener {
       long min;
       long sec;
       long mil;
-      long remTime;
       long maxcount = 0;
       boolean blProgBar = (lbSIP.getText().indexOf("SCAN") == -1);
-      double perc;
-      int idx;
-      String outtext;
-      int ctr = 0;
       if (blProgBar) {
         try {
           maxcount = Long.parseLong(props.getProperty("dump.entries"));
@@ -554,26 +549,8 @@ public class JUninstaller extends Frame implements ActionListener {
         min = diffTime/60000;
         sec = (diffTime/1000)%60;
         mil = (diffTime/10)%100;
-        outtext = min+":"+((sec<10)?"0":"")+sec+"."+((mil<10)?"0":"")+mil;
-        if (blProgBar && maxcount>0) {
-          progBar.setPos(mfs.cmpcounter);
-          perc = (double)mfs.cmpcounter/(double)maxcount;
-          if (perc>0.1 && ctr>10) {
-            remTime = (int)((double)diffTime/perc)-diffTime;
-            min = remTime/60000;
-            sec = (remTime/1000)%60;
-            mil = (remTime/10)%100;
-            outtext += " ("+min+":"+((sec<10)?"0":"")+sec+"."+((mil<10)?"0":"")+mil+")";
-            ctr = 0;
-          } else {
-            idx = lbTime.getText().indexOf(" ");
-            if (idx>=0) {
-              outtext += lbTime.getText().substring(lbTime.getText().indexOf(" "));
-            }
-          }
-          ctr++;
-        }
-        lbTime.setText(outtext);
+        lbTime.setText(min+":"+((sec<10)?"0":"")+sec+"."+((mil<10)?"0":"")+mil);
+        if (blProgBar && maxcount>0) progBar.setPos(mfs.cmpcounter);
         try {
           Thread.sleep(500);
         } catch (Exception ex) {
